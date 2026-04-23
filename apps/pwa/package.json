@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@ds-mob/core": "workspace:*",
+    "@ds-mob/storage": "workspace:*",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },

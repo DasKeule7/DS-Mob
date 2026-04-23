@@ -17,6 +17,9 @@ importers:
       '@ds-mob/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@ds-mob/storage':
+        specifier: workspace:*
+        version: link:../../packages/storage
       react:
         specifier: ^19.0.0
         version: 19.2.5
@@ -47,6 +50,22 @@ importers:
         version: 2.1.9(terser@5.46.2)
 
   packages/core:
+    devDependencies:
+      typescript:
+        specifier: ^5.6.3
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.4
+        version: 2.1.9(terser@5.46.2)
+
+  packages/storage:
+    dependencies:
+      '@ds-mob/core':
+        specifier: workspace:*
+        version: link:../core
+      idb-keyval:
+        specifier: ^6.2.1
+        version: 6.2.2
     devDependencies:
       typescript:
         specifier: ^5.6.3
@@ -1331,6 +1350,9 @@ packages:
   hasown@2.0.3:
     resolution: {integrity: sha512-ej4AhfhfL2Q2zpMmLo7U1Uv9+PyhIZpgQLGT1F9miIGmiCJIoCgSmczFdrc97mWT4kVY72KA+WnnhJ5pghSvSg==}
     engines: {node: '>= 0.4'}
+
+  idb-keyval@6.2.2:
+    resolution: {integrity: sha512-yjD9nARJ/jb1g+CvD0tlhUHOrJ9Sy0P8T9MF3YaLlHnSRpwPfpTX0XIvpmw3gAJUmEu3FiICLBDPXVwyEvrleg==}
 
   idb@7.1.1:
     resolution: {integrity: sha512-gchesWBzyvGHRO9W8tzUWFDycow5gwjvFKfyV9FF32Y7F50yZMp7mP+T2mJIWFx49zicqyC4uefHM17o6xKIVQ==}
@@ -3461,6 +3483,8 @@ snapshots:
   hasown@2.0.3:
     dependencies:
       function-bind: 1.1.2
+
+  idb-keyval@6.2.2: {}
 
   idb@7.1.1: {}
 

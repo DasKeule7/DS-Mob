@@ -1,49 +1,54 @@
-import { useEffect, useState } from "react";
-import { resourcesAt, EMPTY_RECRUIT_QUEUES, type Village } from "@ds-mob/core";
+import { useState } from "react";
+import { GameProvider, useGame } from "../game/GameProvider.js";
+import { VillageScreen } from "../screens/VillageScreen.js";
+import { MapScreen } from "../screens/MapScreen.js";
+import { ReportsScreen } from "../screens/ReportsScreen.js";
+import { SettingsScreen } from "../screens/SettingsScreen.js";
+import { NewGameScreen } from "../screens/NewGameScreen.js";
 
-const demoVillage: Village = {
-  id: "v1",
-  ownerId: "me",
-  coord: { x: 500, y: 500 },
-  name: "Mein Startdorf",
-  buildings: {
-    main: 1, barracks: 0, stable: 0, garage: 0, academy: 0, smithy: 0, rally: 1,
-    statue: 0, market: 0, wood: 1, stone: 1, iron: 1, farm: 1, storage: 1, hide: 0,
-    wall: 0, church: 0, watchtower: 0,
-  },
-  units: {
-    spear: 0, sword: 0, axe: 0, archer: 0, scout: 0, lightCav: 0, mountedArcher: 0,
-    heavyCav: 0, ram: 0, catapult: 0, paladin: 0, nobleman: 0, militia: 0,
-  },
-  resources: { wood: 0, stone: 0, iron: 0 },
-  lastUpdateMs: Date.now(),
-  loyalty: 100,
-  buildQueue: [],
-  recruitQueues: { ...EMPTY_RECRUIT_QUEUES },
-  mintedCoins: 0,
-};
+type Tab = "village" | "map" | "reports" | "settings";
 
 export function App() {
-  const [now, setNow] = useState(Date.now());
-  useEffect(() => {
-    const t = window.setInterval(() => setNow(Date.now()), 1000);
-    return () => window.clearInterval(t);
-  }, []);
+  return (
+    <GameProvider>
+      <Shell />
+    </GameProvider>
+  );
+}
 
-  const r = resourcesAt(demoVillage, now);
+function Shell() {
+  const { world, status } = useGame();
+  const [tab, setTab] = useState<Tab>("village");
+
+  if (status === "loading") return <div className="splash">Lade Welt…</div>;
+  if (status === "error") return <div className="splash error">Fehler beim Laden der Welt.</div>;
+  if (!world) return <NewGameScreen />;
+
+  const firstVillageId = Object.keys(world.villages)[0]!;
 
   return (
     <main className="app">
-      <header className="bar">
-        <span>🌲 {Math.floor(r.wood)}</span>
-        <span>🧱 {Math.floor(r.stone)}</span>
-        <span>⛏️ {Math.floor(r.iron)}</span>
-      </header>
-      <section className="village">
-        <h1>{demoVillage.name}</h1>
-        <p className="coord">({demoVillage.coord.x} | {demoVillage.coord.y})</p>
-        <p>Phase 0 läuft — Kern-Engine und Basis-Scaffolding sind da.</p>
-      </section>
+      <div className="content">
+        {tab === "village" && <VillageScreen villageId={firstVillageId} />}
+        {tab === "map" && <MapScreen />}
+        {tab === "reports" && <ReportsScreen />}
+        {tab === "settings" && <SettingsScreen />}
+      </div>
+      <nav className="tabbar">
+        <TabButton active={tab === "village"} onClick={() => setTab("village")} icon="🏘️" label="Dorf" />
+        <TabButton active={tab === "map"} onClick={() => setTab("map")} icon="🗺️" label="Karte" />
+        <TabButton active={tab === "reports"} onClick={() => setTab("reports")} icon="📜" label="Berichte" />
+        <TabButton active={tab === "settings"} onClick={() => setTab("settings")} icon="⚙️" label="Optionen" />
+      </nav>
     </main>
+  );
+}
+
+function TabButton({ active, onClick, icon, label }: { active: boolean; onClick: () => void; icon: string; label: string }) {
+  return (
+    <button type="button" className={"tab" + (active ? " active" : "")} onClick={onClick}>
+      <span className="tabIcon">{icon}</span>
+      <span className="tabLabel">{label}</span>
+    </button>
   );
 }
