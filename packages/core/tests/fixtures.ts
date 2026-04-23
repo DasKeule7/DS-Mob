@@ -31,6 +31,8 @@ export function makeWorld(villages: Village[]): WorldState {
     nowMs: 0,
     villages: Object.fromEntries(villages.map((v) => [v.id, v])),
     players: {},
+    flights: [],
+    reports: [],
   };
 }
 

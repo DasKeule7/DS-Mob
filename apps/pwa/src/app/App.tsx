@@ -30,7 +30,7 @@ function Shell() {
     <main className="app">
       <div className="content">
         {tab === "village" && <VillageScreen villageId={firstVillageId} />}
-        {tab === "map" && <MapScreen />}
+        {tab === "map" && <MapScreen myVillageId={firstVillageId} />}
         {tab === "reports" && <ReportsScreen />}
         {tab === "settings" && <SettingsScreen />}
       </div>

@@ -1,7 +1,7 @@
 import { useState } from "react";
-import type { BuildingId } from "@ds-mob/core";
+import type { BuildingId, UnitId } from "@ds-mob/core";
 import { useGame } from "../game/GameProvider.js";
-import { actEnqueueBuild, actCancelBuild } from "../game/actions.js";
+import { actEnqueueBuild, actCancelBuild, actEnqueueRecruit } from "../game/actions.js";
 import { ResourceBar } from "../components/ResourceBar.js";
 import { BuildingGrid } from "../components/BuildingGrid.js";
 import { BuildQueue } from "../components/BuildQueue.js";
@@ -53,6 +53,11 @@ export function VillageScreen({ villageId }: { villageId: string }) {
             } else {
               showError(r.error);
             }
+          }}
+          onRecruit={(unit: UnitId, count: number) => {
+            const r = actEnqueueRecruit(world, villageId, unit, count, Date.now());
+            if (r.ok) applyWorld(r.state);
+            else showError(r.error);
           }}
         />
       )}

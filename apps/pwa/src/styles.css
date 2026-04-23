@@ -303,3 +303,103 @@ input {
 .metaList { margin: 1rem 0; padding: 0; }
 .metaList dt { color: var(--accent-dim); font-size: 0.8rem; margin-top: 0.5rem; }
 .metaList dd { margin: 0 0 0.25rem; font-weight: 600; }
+
+/* Map */
+.mapScreen { padding: 0; display: flex; flex-direction: column; }
+.mapWrap { flex: 1; position: relative; overflow: hidden; background: #13090a; }
+.mapCanvas { position: absolute; inset: 0; touch-action: none; }
+.mapCanvas svg { display: block; }
+.mapControls {
+  position: absolute;
+  top: calc(env(safe-area-inset-top) + 0.5rem);
+  right: 0.5rem;
+  display: grid;
+  gap: 0.25rem;
+  z-index: 2;
+}
+.mapControls button {
+  width: 36px;
+  height: 36px;
+  background: var(--surface);
+  color: var(--accent);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 1.1rem;
+}
+.mapLegend {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  padding: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--accent-dim);
+  background: var(--bg-elev);
+  border-top: 1px solid var(--border);
+}
+.dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 0.25rem; vertical-align: middle; }
+.dot.me { background: #c9a96a; }
+.dot.barb { background: #7a5a3c; }
+.dot.enemy { background: #b0463a; }
+
+/* Attack dialog */
+.attackList { max-height: 40vh; overflow-y: auto; margin-bottom: 0.5rem; }
+.attackRow {
+  display: grid;
+  grid-template-columns: 1fr 72px auto;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid var(--border);
+}
+.attackRowInfo { display: flex; flex-direction: column; }
+.attackRow input { padding: 0.4rem 0.5rem; }
+.chipButton {
+  background: var(--surface);
+  color: var(--accent-dim);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.8rem;
+}
+
+/* Recruit panel */
+.recruitPanel { margin-top: 1rem; border-top: 1px solid var(--border); padding-top: 0.5rem; }
+.recruitPanel h3 { margin: 0 0 0.4rem; font-size: 0.95rem; }
+.unitRow {
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--border);
+}
+.unitRowHeader { display: flex; justify-content: space-between; align-items: baseline; }
+.unitStats { color: var(--accent-dim); font-size: 0.75rem; font-variant-numeric: tabular-nums; }
+.unitRowInfo { display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--accent-dim); }
+.unitRowActions { display: grid; grid-template-columns: 1fr auto; gap: 0.5rem; margin-top: 0.25rem; }
+.unitRowActions input { padding: 0.4rem 0.5rem; }
+.sheetButton.compact { padding: 0.4rem 0.8rem; width: auto; }
+
+/* Reports */
+.reportsScreen { padding: 1rem; gap: 0.5rem; }
+.reportList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.35rem; }
+.reportItem {
+  width: 100%;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 0.6rem;
+  align-items: center;
+  text-align: left;
+  padding: 0.6rem 0.75rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--fg);
+}
+.reportItem.read { opacity: 0.65; }
+.reportIcon { font-size: 1.2rem; }
+.reportInfo { display: flex; flex-direction: column; }
+.reportLoot { color: var(--success); font-variant-numeric: tabular-nums; }
+
+.unitTable { width: 100%; border-collapse: collapse; margin-bottom: 0.5rem; font-size: 0.85rem; }
+.unitTable th, .unitTable td { padding: 0.3rem 0.4rem; border-bottom: 1px solid var(--border); text-align: left; }
+.unitTable td:nth-child(2), .unitTable td:nth-child(3),
+.unitTable th:nth-child(2), .unitTable th:nth-child(3) { text-align: right; font-variant-numeric: tabular-nums; }

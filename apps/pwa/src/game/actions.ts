@@ -3,15 +3,12 @@ import {
   enqueueBuild as simEnqueueBuild,
   cancelBuild as simCancelBuild,
   enqueueRecruit as simEnqueueRecruit,
+  sendAttack as simSendAttack,
   type WorldState,
   type BuildingId,
   type UnitId,
 } from "@ds-mob/core";
 import { FARM_CAPACITY } from "@ds-mob/core";
-
-// Alle Aktionen fahren die Welt auf `nowMs` vor, wenden dann die Regel an und
-// geben den neuen State zurück. So bleibt der State deterministisch und lässt
-// sich später 1:1 auf dem Server ausführen.
 
 function currentFarmCap(world: WorldState, villageId: string): number {
   const v = world.villages[villageId];
@@ -31,10 +28,7 @@ export function actEnqueueBuild(
   if (!v) return { ok: false, error: "Dorf unbekannt." };
   const r = simEnqueueBuild(v, building, nowMs, { worldSpeed: advanced.config.speed });
   if (!r.ok) return { ok: false, error: r.error.message };
-  return {
-    ok: true,
-    state: { ...advanced, villages: { ...advanced.villages, [villageId]: r.village } },
-  };
+  return { ok: true, state: { ...advanced, villages: { ...advanced.villages, [villageId]: r.village } } };
 }
 
 export function actCancelBuild(state: WorldState, villageId: string, queueIndex: number, nowMs: number): WorldState {
@@ -60,8 +54,22 @@ export function actEnqueueRecruit(
     farmCap: currentFarmCap(advanced, villageId),
   });
   if (!r.ok) return { ok: false, error: r.error.message };
-  return {
-    ok: true,
-    state: { ...advanced, villages: { ...advanced.villages, [villageId]: r.village } },
-  };
+  return { ok: true, state: { ...advanced, villages: { ...advanced.villages, [villageId]: r.village } } };
+}
+
+export function actSendAttack(
+  state: WorldState,
+  fromVillageId: string,
+  toVillageId: string,
+  units: Partial<Record<UnitId, number>>,
+  nowMs: number,
+): { ok: true; state: WorldState } | { ok: false; error: string } {
+  const advanced = advanceTo(state, nowMs);
+  const r = simSendAttack(advanced, { fromVillageId, toVillageId, units, nowMs });
+  if (!r.ok) return { ok: false, error: r.error.message };
+  return { ok: true, state: r.state };
+}
+
+export function actMarkReportRead(state: WorldState, reportId: string): WorldState {
+  return { ...state, reports: state.reports.map((r) => (r.id === reportId ? { ...r, read: true } : r)) };
 }

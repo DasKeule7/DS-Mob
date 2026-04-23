@@ -37,6 +37,39 @@ export const EMPTY_RECRUIT_QUEUES: RecruitQueues = {
   farm: [],
 };
 
+export type FlightMode = "attack" | "return" | "support";
+
+export interface Flight {
+  id: string;
+  ownerId: string;
+  fromVillageId: string;
+  toVillageId: string;
+  units: Partial<Record<UnitId, number>>;
+  startMs: number;
+  arriveMs: number;
+  mode: FlightMode;
+  loot?: Resources;
+}
+
+export interface Report {
+  id: string;
+  atMs: number;
+  attackerId: string;
+  defenderId: string;
+  fromVillageId: string;
+  toVillageId: string;
+  attackerUnits: Partial<Record<UnitId, number>>;
+  defenderUnits: Partial<Record<UnitId, number>>;
+  attackerSurvivors: Partial<Record<UnitId, number>>;
+  defenderSurvivors: Partial<Record<UnitId, number>>;
+  winner: "attacker" | "defender" | "draw";
+  loot?: Resources;
+  luckPercent: number;
+  wallLevel: number;
+  effectiveWallLevel: number;
+  read: boolean;
+}
+
 export interface Village {
   id: string;
   ownerId: string;
@@ -74,4 +107,8 @@ export interface WorldState {
   nowMs: number;
   villages: Record<string, Village>;
   players: Record<string, Player>;
+  flights: Flight[];
+  reports: Report[];
 }
+
+export const BARBARIAN_OWNER_ID = "barb";

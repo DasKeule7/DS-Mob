@@ -10,10 +10,21 @@ import {
   MARKET_TRADERS,
   WALL_DEFENSE_MULTIPLIER,
   type BuildingId,
+  type ProducerBuilding,
+  type UnitId,
   type Village,
 } from "@ds-mob/core";
 import { BUILDING_ICONS, BUILDING_LABELS } from "./buildingLabels.js";
 import { formatDuration } from "./BuildQueue.js";
+import { RecruitPanel } from "./RecruitPanel.js";
+
+const PRODUCER_BUILDINGS: Record<string, ProducerBuilding | null> = {
+  barracks: "barracks",
+  stable: "stable",
+  garage: "garage",
+  academy: "academy",
+  statue: "statue",
+};
 
 interface Props {
   village: Village;
@@ -21,9 +32,11 @@ interface Props {
   worldSpeed: number;
   onClose: () => void;
   onUpgrade: () => void;
+  onRecruit?: (unit: UnitId, count: number) => void;
 }
 
-export function BuildingSheet({ village, building, worldSpeed, onClose, onUpgrade }: Props) {
+export function BuildingSheet({ village, building, worldSpeed, onClose, onUpgrade, onRecruit }: Props) {
+  const producer = PRODUCER_BUILDINGS[building] ?? null;
   const def = BUILDINGS[building];
   const currentLevel = village.buildings[building];
   const targetLevel = targetLevelInQueue(village, building);
@@ -74,6 +87,10 @@ export function BuildingSheet({ village, building, worldSpeed, onClose, onUpgrad
               {canAfford ? "Ausbauen" : "Nicht genug Rohstoffe"}
             </button>
           </section>
+        )}
+
+        {producer && onRecruit && village.buildings[building] > 0 && (
+          <RecruitPanel village={village} producer={producer} worldSpeed={worldSpeed} onRecruit={onRecruit} />
         )}
       </div>
     </div>
