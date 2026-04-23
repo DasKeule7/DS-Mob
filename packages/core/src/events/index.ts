@@ -1,15 +1,13 @@
 import type { BuildingId } from "../data/buildings.js";
-import type { UnitId } from "../data/units.js";
+import type { UnitId, ProducerBuilding } from "../data/units.js";
 
 export type GameEvent =
-  | { kind: "buildFinish"; atMs: number; villageId: string; building: BuildingId; newLevel: number }
-  | { kind: "recruitFinish"; atMs: number; villageId: string; unit: UnitId; count: number }
-  | { kind: "troopArrive"; atMs: number; fromVillageId: string; toVillageId: string; units: Partial<Record<UnitId, number>>; attack: boolean };
+  | { kind: "buildFinish"; atMs: number; villageId: string; building: BuildingId; toLevel: number }
+  | { kind: "recruitTick"; atMs: number; villageId: string; producer: ProducerBuilding; unit: UnitId }
+  | { kind: "troopArrive"; atMs: number; fromVillageId: string; toVillageId: string; units: Partial<Record<UnitId, number>>; mode: "attack" | "support" | "return" };
 
-// Einfache Queue-Abstraktion — Implementierung in Phase 1.
-export interface EventQueue {
-  enqueue(event: GameEvent): void;
-  peek(): GameEvent | undefined;
-  pop(): GameEvent | undefined;
-  drainUntil(atMs: number): GameEvent[];
+export function compareEvents(a: GameEvent, b: GameEvent): number {
+  return a.atMs - b.atMs;
 }
+
+export * from "./queue.js";

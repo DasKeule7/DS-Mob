@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { resourcesAt, type Village } from "@ds-mob/core";
+import { resourcesAt, EMPTY_RECRUIT_QUEUES, type Village } from "@ds-mob/core";
 
 const demoVillage: Village = {
   id: "v1",
@@ -18,6 +18,9 @@ const demoVillage: Village = {
   resources: { wood: 0, stone: 0, iron: 0 },
   lastUpdateMs: Date.now(),
   loyalty: 100,
+  buildQueue: [],
+  recruitQueues: { ...EMPTY_RECRUIT_QUEUES },
+  mintedCoins: 0,
 };
 
 export function App() {

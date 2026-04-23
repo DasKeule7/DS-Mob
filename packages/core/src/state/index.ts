@@ -1,5 +1,5 @@
 import type { BuildingId } from "../data/buildings.js";
-import type { UnitId } from "../data/units.js";
+import type { UnitId, ProducerBuilding } from "../data/units.js";
 
 export interface Resources {
   wood: number;
@@ -12,6 +12,31 @@ export interface Coord {
   y: number;
 }
 
+export interface BuildOrder {
+  building: BuildingId;
+  toLevel: number;
+  startMs: number;
+  finishMs: number;
+}
+
+export interface RecruitOrder {
+  unit: UnitId;
+  remainingCount: number;
+  perUnitMs: number;
+  nextFinishMs: number;
+}
+
+export type RecruitQueues = Record<ProducerBuilding, RecruitOrder[]>;
+
+export const EMPTY_RECRUIT_QUEUES: RecruitQueues = {
+  barracks: [],
+  stable: [],
+  garage: [],
+  academy: [],
+  statue: [],
+  farm: [],
+};
+
 export interface Village {
   id: string;
   ownerId: string;
@@ -22,6 +47,9 @@ export interface Village {
   resources: Resources;
   lastUpdateMs: number;
   loyalty: number;
+  buildQueue: BuildOrder[];
+  recruitQueues: RecruitQueues;
+  mintedCoins: number;
 }
 
 export interface Player {
@@ -29,6 +57,7 @@ export interface Player {
   name: string;
   villageIds: string[];
   points: number;
+  noblesProduced: number;
 }
 
 export interface WorldConfig {

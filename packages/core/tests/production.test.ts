@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { productionPerHour, storageCapacity, resourcesAt } from "../src/sim/production.js";
-import type { Village } from "../src/state/index.js";
+import { makeVillage } from "./fixtures.js";
 
 describe("productionPerHour (Wiki-Referenzen, Welt-Speed 1)", () => {
   it("Level 0 = 5 (Grundproduktion)", () => {
@@ -30,24 +30,10 @@ describe("storageCapacity", () => {
 });
 
 describe("resourcesAt (lazy)", () => {
-  const baseVillage: Village = {
-    id: "v1",
-    ownerId: "p1",
-    coord: { x: 500, y: 500 },
-    name: "Startdorf",
-    buildings: {
-      main: 1, barracks: 0, stable: 0, garage: 0, academy: 0, smithy: 0, rally: 1,
-      statue: 0, market: 0, wood: 1, stone: 1, iron: 1, farm: 1, storage: 1, hide: 0,
-      wall: 0, church: 0, watchtower: 0,
-    },
-    units: {
-      spear: 0, sword: 0, axe: 0, archer: 0, scout: 0, lightCav: 0, mountedArcher: 0,
-      heavyCav: 0, ram: 0, catapult: 0, paladin: 0, nobleman: 0, militia: 0,
-    },
+  const baseVillage = makeVillage({
     resources: { wood: 0, stone: 0, iron: 0 },
     lastUpdateMs: 0,
-    loyalty: 100,
-  };
+  });
 
   it("1 Stunde auf Level-1-Minen = 30 jede Ressource", () => {
     const r = resourcesAt(baseVillage, 3_600_000);
