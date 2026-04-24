@@ -19,7 +19,7 @@ export function ReportsScreen() {
         {reports.map((r) => {
           const attacker = world.villages[r.fromVillageId];
           const defender = world.villages[r.toVillageId];
-          const icon = r.winner === "attacker" ? "✅" : r.winner === "defender" ? "❌" : "➖";
+          const icon = r.takeover ? "👑" : r.winner === "attacker" ? "✅" : r.winner === "defender" ? "❌" : "➖";
           return (
             <li key={r.id}>
               <button
@@ -36,6 +36,7 @@ export function ReportsScreen() {
                   <span className="subtle">
                     {new Date(r.atMs).toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" })}
                     {attacker ? ` · von ${attacker.name}` : ""}
+                    {r.takeover ? " · erobert" : r.loyaltyAfter !== undefined ? ` · Zustimmung ${r.loyaltyAfter}` : ""}
                   </span>
                 </div>
                 {r.loot && (r.loot.wood + r.loot.stone + r.loot.iron > 0) ? (
@@ -72,6 +73,12 @@ function ReportDetail({ report, onClose }: { report: Report; onClose: () => void
         <p className="sheetNote">
           Wall: {report.effectiveWallLevel} (nominal {report.wallLevel}) · Glück {report.luckPercent.toFixed(1)} %
         </p>
+        {report.loyaltyDrop !== undefined && (
+          <p className="sheetNote">
+            Zustimmung: −{report.loyaltyDrop} → <strong>{report.loyaltyAfter}</strong>
+            {report.takeover ? " · Dorf erobert" : ""}
+          </p>
+        )}
         {report.loot && (
           <p className="sheetNote">
             Beute: 🌲 {report.loot.wood} · 🧱 {report.loot.stone} · ⛏️ {report.loot.iron}

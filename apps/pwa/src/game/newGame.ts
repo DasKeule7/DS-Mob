@@ -52,6 +52,7 @@ function makeBarbarian(id: string, coord: { x: number; y: number }, nowMs: numbe
     buildQueue: [],
     recruitQueues: { ...EMPTY_RECRUIT_QUEUES },
     mintedCoins: 0,
+    supports: [],
   };
 }
 
@@ -92,6 +93,7 @@ export function createNewWorld(opts: { playerName: string; villageName: string; 
     buildQueue: [],
     recruitQueues: { ...EMPTY_RECRUIT_QUEUES },
     mintedCoins: 0,
+    supports: [],
   };
   const player: Player = {
     id: playerId,

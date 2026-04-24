@@ -17,6 +17,8 @@ import {
 import { BUILDING_ICONS, BUILDING_LABELS } from "./buildingLabels.js";
 import { formatDuration } from "./BuildQueue.js";
 import { RecruitPanel } from "./RecruitPanel.js";
+import { AcademyPanel } from "./AcademyPanel.js";
+import type { Player } from "@ds-mob/core";
 
 const PRODUCER_BUILDINGS: Record<string, ProducerBuilding | null> = {
   barracks: "barracks",
@@ -30,12 +32,14 @@ interface Props {
   village: Village;
   building: BuildingId;
   worldSpeed: number;
+  player?: Player | undefined;
   onClose: () => void;
   onUpgrade: () => void;
   onRecruit?: (unit: UnitId, count: number) => void;
+  onMintCoin?: () => void;
 }
 
-export function BuildingSheet({ village, building, worldSpeed, onClose, onUpgrade, onRecruit }: Props) {
+export function BuildingSheet({ village, building, worldSpeed, player, onClose, onUpgrade, onRecruit, onMintCoin }: Props) {
   const producer = PRODUCER_BUILDINGS[building] ?? null;
   const def = BUILDINGS[building];
   const currentLevel = village.buildings[building];
@@ -91,6 +95,9 @@ export function BuildingSheet({ village, building, worldSpeed, onClose, onUpgrad
 
         {producer && onRecruit && village.buildings[building] > 0 && (
           <RecruitPanel village={village} producer={producer} worldSpeed={worldSpeed} onRecruit={onRecruit} />
+        )}
+        {building === "academy" && player && onMintCoin && village.buildings.academy > 0 && (
+          <AcademyPanel village={village} player={player} onMint={onMintCoin} />
         )}
       </div>
     </div>

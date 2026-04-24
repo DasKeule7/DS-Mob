@@ -3,11 +3,13 @@ import { BARBARIAN_OWNER_ID, type Village } from "@ds-mob/core";
 interface Props {
   village: Village;
   isMine: boolean;
+  canSupport: boolean;
   onAttack: () => void;
+  onSupport: () => void;
   onClose: () => void;
 }
 
-export function VillagePopover({ village, isMine, onAttack, onClose }: Props) {
+export function VillagePopover({ village, isMine, canSupport, onAttack, onSupport, onClose }: Props) {
   return (
     <div className="sheetBackdrop" role="dialog" onClick={onClose}>
       <div className="sheet" onClick={(e) => e.stopPropagation()}>
@@ -19,9 +21,13 @@ export function VillagePopover({ village, isMine, onAttack, onClose }: Props) {
           </div>
           <button type="button" className="sheetClose" onClick={onClose}>✕</button>
         </header>
-        {isMine ? (
-          <p className="sheetNote">Dein Dorf.</p>
-        ) : (
+        {isMine && !canSupport && <p className="sheetNote">Dein Dorf.</p>}
+        {canSupport && (
+          <button type="button" className="sheetButton primary" onClick={onSupport}>
+            Unterstützen
+          </button>
+        )}
+        {!isMine && (
           <button type="button" className="sheetButton primary" onClick={onAttack}>
             Angriff starten
           </button>

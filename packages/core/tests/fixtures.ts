@@ -21,6 +21,7 @@ export function makeVillage(overrides: Partial<Village> = {}): Village {
     buildQueue: [],
     recruitQueues: { ...EMPTY_RECRUIT_QUEUES },
     mintedCoins: 0,
+    supports: [],
     ...overrides,
   };
 }

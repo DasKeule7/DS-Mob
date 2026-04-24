@@ -37,7 +37,7 @@ export const EMPTY_RECRUIT_QUEUES: RecruitQueues = {
   farm: [],
 };
 
-export type FlightMode = "attack" | "return" | "support";
+export type FlightMode = "attack" | "return" | "support" | "recall";
 
 export interface Flight {
   id: string;
@@ -49,6 +49,14 @@ export interface Flight {
   arriveMs: number;
   mode: FlightMode;
   loot?: Resources;
+}
+
+// Unterstützung, die bereits in einem Dorf steht.
+export interface Support {
+  id: string;
+  ownerId: string;
+  fromVillageId: string;
+  units: Partial<Record<UnitId, number>>;
 }
 
 export interface Report {
@@ -68,6 +76,9 @@ export interface Report {
   wallLevel: number;
   effectiveWallLevel: number;
   read: boolean;
+  loyaltyDrop?: number;
+  loyaltyAfter?: number;
+  takeover?: boolean;
 }
 
 export interface Village {
@@ -83,6 +94,7 @@ export interface Village {
   buildQueue: BuildOrder[];
   recruitQueues: RecruitQueues;
   mintedCoins: number;
+  supports: Support[];
 }
 
 export interface Player {

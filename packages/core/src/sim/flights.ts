@@ -1,11 +1,16 @@
 import { UNITS, type UnitId } from "../data/units.js";
-import type { Flight, Village, WorldState } from "../state/index.js";
+import type { Flight, Support, Village, WorldState } from "../state/index.js";
 import { distanceFields, travelTimeMs } from "./movement.js";
 
 let flightCounter = 1;
 
 export function nextFlightId(): string {
   return `flight_${Date.now().toString(36)}_${(flightCounter++).toString(36)}`;
+}
+
+let supportCounter = 1;
+export function nextSupportId(): string {
+  return `sup_${Date.now().toString(36)}_${(supportCounter++).toString(36)}`;
 }
 
 export interface SendAttackInput {
@@ -20,9 +25,11 @@ export interface SendAttackError {
   message: string;
 }
 
-// Erstellt einen Angriffs-Flight und zieht Einheiten aus dem Ausgangsdorf ab.
-// Reine Funktion: liefert neuen WorldState oder Fehler.
-export function sendAttack(state: WorldState, input: SendAttackInput): { ok: true; state: WorldState; flight: Flight } | { ok: false; error: SendAttackError } {
+function buildFlight(
+  state: WorldState,
+  input: SendAttackInput,
+  mode: "attack" | "support",
+): { ok: true; state: WorldState; flight: Flight } | { ok: false; error: SendAttackError } {
   const from = state.villages[input.fromVillageId];
   const to = state.villages[input.toVillageId];
   if (!from || !to) return { ok: false, error: { kind: "villageMissing", message: "Dorf unbekannt." } };
@@ -51,7 +58,7 @@ export function sendAttack(state: WorldState, input: SendAttackInput): { ok: tru
     units: { ...input.units },
     startMs: input.nowMs,
     arriveMs: input.nowMs + distMs,
-    mode: "attack",
+    mode,
   };
 
   const updatedUnits = { ...from.units };
@@ -71,14 +78,57 @@ export function sendAttack(state: WorldState, input: SendAttackInput): { ok: tru
   };
 }
 
-// Vorschau-Infos für die UI (Reise + Ankunft). Ruft keine Mutation.
-export function previewAttack(state: WorldState, fromId: string, toId: string, units: Partial<Record<UnitId, number>>, nowMs: number): {
+export function sendAttack(state: WorldState, input: SendAttackInput) {
+  return buildFlight(state, input, "attack");
+}
+
+export function sendSupport(state: WorldState, input: SendAttackInput) {
+  return buildFlight(state, input, "support");
+}
+
+// Unterstützung zurückrufen: Erzeugt Rückflug zum Herkunftsdorf und entfernt
+// den Support-Eintrag aus dem Zieldorf.
+export function recallSupport(state: WorldState, villageId: string, supportId: string, nowMs: number): { ok: true; state: WorldState } | { ok: false; error: string } {
+  const host = state.villages[villageId];
+  if (!host) return { ok: false, error: "Dorf unbekannt." };
+  const sup = host.supports.find((s) => s.id === supportId);
+  if (!sup) return { ok: false, error: "Unterstützung nicht gefunden." };
+  const home = state.villages[sup.fromVillageId];
+  if (!home) return { ok: false, error: "Herkunftsdorf existiert nicht mehr." };
+  const travelMs = travelTimeMs(host.coord, home.coord, sup.units, {
+    worldSpeed: state.config.speed,
+    unitSpeed: state.config.unitSpeed,
+  });
+  const flight: Flight = {
+    id: nextFlightId(),
+    ownerId: sup.ownerId,
+    fromVillageId: host.id,
+    toVillageId: home.id,
+    units: { ...sup.units },
+    startMs: nowMs,
+    arriveMs: nowMs + travelMs,
+    mode: "return",
+  };
+  const newHost: Village = { ...host, supports: host.supports.filter((s) => s.id !== supportId) };
+  return {
+    ok: true,
+    state: {
+      ...state,
+      villages: { ...state.villages, [host.id]: newHost },
+      flights: [...state.flights, flight],
+    },
+  };
+}
+
+export interface AttackPreview {
   distanceFields: number;
   travelMs: number;
   arriveMs: number;
   carry: number;
   popCost: number;
-} | null {
+}
+
+export function previewAttack(state: WorldState, fromId: string, toId: string, units: Partial<Record<UnitId, number>>, nowMs: number): AttackPreview | null {
   const from = state.villages[fromId];
   const to = state.villages[toId];
   if (!from || !to) return null;
@@ -91,4 +141,16 @@ export function previewAttack(state: WorldState, fromId: string, toId: string, u
     pop += n * UNITS[id].cost.pop;
   }
   return { distanceFields: d, travelMs, arriveMs: nowMs + travelMs, carry, popCost: pop };
+}
+
+// Hilfsfunktion: Support in Village einfügen oder zusammenführen (gleicher
+// Herkunftsowner + fromVillage addiert Einheiten).
+export function mergeSupport(existing: Support[], incoming: Support): Support[] {
+  const same = existing.find((s) => s.ownerId === incoming.ownerId && s.fromVillageId === incoming.fromVillageId);
+  if (!same) return [...existing, incoming];
+  const mergedUnits: Partial<Record<UnitId, number>> = { ...same.units };
+  for (const id of Object.keys(incoming.units) as UnitId[]) {
+    mergedUnits[id] = (mergedUnits[id] ?? 0) + (incoming.units[id] ?? 0);
+  }
+  return existing.map((s) => (s === same ? { ...s, units: mergedUnits } : s));
 }

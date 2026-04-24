@@ -1,20 +1,20 @@
 import { useState } from "react";
 import { BARBARIAN_OWNER_ID } from "@ds-mob/core";
 import { useGame } from "../game/GameProvider.js";
-import { actSendAttack } from "../game/actions.js";
+import { actSendAttack, actSendSupport } from "../game/actions.js";
 import { MapView } from "../components/MapView.js";
 import { VillagePopover } from "../components/VillagePopover.js";
-import { AttackDialog } from "../components/AttackDialog.js";
+import { AttackDialog, type SendMode } from "../components/AttackDialog.js";
 
-export function MapScreen({ myVillageId }: { myVillageId: string }) {
+export function MapScreen({ myVillageId, myOwnerId }: { myVillageId: string; myOwnerId: string }) {
   const { world, applyWorld } = useGame();
   const [selected, setSelected] = useState<string | null>(null);
-  const [attacking, setAttacking] = useState<string | null>(null);
+  const [dialog, setDialog] = useState<{ toId: string; mode: SendMode } | null>(null);
   const [toast, setToast] = useState<string | null>(null);
 
   if (!world) return null;
   const selectedVillage = selected ? world.villages[selected] : null;
-  const attackingVillage = attacking ? world.villages[attacking] : null;
+  const dialogTarget = dialog ? world.villages[dialog.toId] : null;
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -32,27 +32,37 @@ export function MapScreen({ myVillageId }: { myVillageId: string }) {
       {selectedVillage && (
         <VillagePopover
           village={selectedVillage}
-          isMine={selectedVillage.id === myVillageId}
+          isMine={selectedVillage.ownerId === myOwnerId}
+          canSupport={selectedVillage.ownerId === myOwnerId && selectedVillage.id !== myVillageId}
           onAttack={() => {
-            setAttacking(selectedVillage.id);
+            setDialog({ toId: selectedVillage.id, mode: "attack" });
+            setSelected(null);
+          }}
+          onSupport={() => {
+            setDialog({ toId: selectedVillage.id, mode: "support" });
             setSelected(null);
           }}
           onClose={() => setSelected(null)}
         />
       )}
-      {attackingVillage && (
+      {dialog && dialogTarget && (
         <AttackDialog
           world={world}
           fromVillageId={myVillageId}
-          toVillage={attackingVillage}
-          onClose={() => setAttacking(null)}
-          onSend={(units) => {
-            const r = actSendAttack(world, myVillageId, attackingVillage.id, units, Date.now());
+          toVillage={dialogTarget}
+          mode={dialog.mode}
+          allowSupport={dialogTarget.ownerId === myOwnerId && dialogTarget.id !== myVillageId}
+          onModeChange={(m) => setDialog({ toId: dialog.toId, mode: m })}
+          onClose={() => setDialog(null)}
+          onSend={(units, mode) => {
+            const r = mode === "attack"
+              ? actSendAttack(world, myVillageId, dialogTarget.id, units, Date.now())
+              : actSendSupport(world, myVillageId, dialogTarget.id, units, Date.now());
             if (r.ok) {
               applyWorld(r.state);
-              setAttacking(null);
-              const name = attackingVillage.ownerId === BARBARIAN_OWNER_ID ? "Barbarendorf" : attackingVillage.name;
-              showToast(`Angriff gegen ${name} unterwegs.`);
+              setDialog(null);
+              const name = dialogTarget.ownerId === BARBARIAN_OWNER_ID ? "Barbarendorf" : dialogTarget.name;
+              showToast(`${mode === "attack" ? "Angriff" : "Unterstützung"} → ${name}`);
             } else {
               showToast(r.error);
             }

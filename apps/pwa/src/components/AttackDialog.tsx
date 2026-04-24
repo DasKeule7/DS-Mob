@@ -9,15 +9,20 @@ import {
 import { UNIT_LABELS } from "./buildingLabels.js";
 import { formatDuration } from "./BuildQueue.js";
 
+export type SendMode = "attack" | "support";
+
 interface Props {
   world: WorldState;
   fromVillageId: string;
   toVillage: Village;
+  mode: SendMode;
+  allowSupport: boolean;
+  onModeChange: (m: SendMode) => void;
   onClose: () => void;
-  onSend: (units: Partial<Record<UnitId, number>>) => void;
+  onSend: (units: Partial<Record<UnitId, number>>, mode: SendMode) => void;
 }
 
-export function AttackDialog({ world, fromVillageId, toVillage, onClose, onSend }: Props) {
+export function AttackDialog({ world, fromVillageId, toVillage, mode, allowSupport, onModeChange, onClose, onSend }: Props) {
   const from = world.villages[fromVillageId];
   const [selection, setSelection] = useState<Record<UnitId, string>>({
     spear: "", sword: "", axe: "", archer: "", scout: "", lightCav: "", mountedArcher: "",
@@ -45,13 +50,20 @@ export function AttackDialog({ world, fromVillageId, toVillage, onClose, onSend 
     <div className="sheetBackdrop" role="dialog" onClick={onClose}>
       <div className="sheet" onClick={(e) => e.stopPropagation()}>
         <header className="sheetHeader">
-          <span className="sheetIcon">⚔️</span>
+          <span className="sheetIcon">{mode === "attack" ? "⚔️" : "🛡️"}</span>
           <div>
-            <h2>Angriff</h2>
+            <h2>{mode === "attack" ? "Angriff" : "Unterstützung"}</h2>
             <p className="sheetLevel">→ {toVillage.name} ({toVillage.coord.x} | {toVillage.coord.y})</p>
           </div>
           <button type="button" className="sheetClose" onClick={onClose}>✕</button>
         </header>
+
+        {allowSupport && (
+          <div className="modeSwitch">
+            <button type="button" className={"modeBtn" + (mode === "attack" ? " active" : "")} onClick={() => onModeChange("attack")}>Angreifen</button>
+            <button type="button" className={"modeBtn" + (mode === "support" ? " active" : "")} onClick={() => onModeChange("support")}>Unterstützen</button>
+          </div>
+        )}
 
         <div className="attackList">
           {(Object.keys(UNITS) as UnitId[])
@@ -92,9 +104,9 @@ export function AttackDialog({ world, fromVillageId, toVillage, onClose, onSend 
           type="button"
           className="sheetButton primary"
           disabled={!canSend}
-          onClick={() => canSend && onSend(parsed)}
+          onClick={() => canSend && onSend(parsed, mode)}
         >
-          {overLimit ? "Mehr angefragt als verfügbar" : total > 0 ? "Angriff senden" : "Truppen wählen"}
+          {overLimit ? "Mehr angefragt als verfügbar" : total > 0 ? (mode === "attack" ? "Angriff senden" : "Unterstützung senden") : "Truppen wählen"}
         </button>
       </div>
     </div>
