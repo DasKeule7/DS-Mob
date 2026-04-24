@@ -18,6 +18,7 @@ import { BUILDING_ICONS, BUILDING_LABELS } from "./buildingLabels.js";
 import { formatDuration } from "./BuildQueue.js";
 import { RecruitPanel } from "./RecruitPanel.js";
 import { AcademyPanel } from "./AcademyPanel.js";
+import { SmithyPanel } from "./SmithyPanel.js";
 import type { Player } from "@ds-mob/core";
 
 const PRODUCER_BUILDINGS: Record<string, ProducerBuilding | null> = {
@@ -37,9 +38,10 @@ interface Props {
   onUpgrade: () => void;
   onRecruit?: (unit: UnitId, count: number) => void;
   onMintCoin?: () => void;
+  onResearch?: (unit: UnitId) => void;
 }
 
-export function BuildingSheet({ village, building, worldSpeed, player, onClose, onUpgrade, onRecruit, onMintCoin }: Props) {
+export function BuildingSheet({ village, building, worldSpeed, player, onClose, onUpgrade, onRecruit, onMintCoin, onResearch }: Props) {
   const producer = PRODUCER_BUILDINGS[building] ?? null;
   const def = BUILDINGS[building];
   const currentLevel = village.buildings[building];
@@ -98,6 +100,9 @@ export function BuildingSheet({ village, building, worldSpeed, player, onClose, 
         )}
         {building === "academy" && player && onMintCoin && village.buildings.academy > 0 && (
           <AcademyPanel village={village} player={player} onMint={onMintCoin} />
+        )}
+        {building === "smithy" && player && onResearch && village.buildings.smithy > 0 && (
+          <SmithyPanel village={village} player={player} onResearch={onResearch} />
         )}
       </div>
     </div>

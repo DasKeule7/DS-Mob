@@ -103,6 +103,7 @@ export interface Player {
   villageIds: string[];
   points: number;
   noblesProduced: number;
+  research: Partial<Record<UnitId, number>>;
 }
 
 export interface WorldConfig {

@@ -47,7 +47,7 @@ describe("applyNobleAttack", () => {
 describe("mintCoin", () => {
   it("zieht Münzkosten ab und erhöht mintedCoins", () => {
     const v = makeVillage({ resources: { wood: 100_000, stone: 100_000, iron: 100_000 } });
-    const p = { id: "p1", name: "X", villageIds: ["v1"], points: 0, noblesProduced: 0 };
+    const p = { id: "p1", name: "X", villageIds: ["v1"], points: 0, noblesProduced: 0, research: {} };
     const r = mintCoin(v, p);
     expect("error" in r).toBe(false);
     if ("error" in r) return;
@@ -57,7 +57,7 @@ describe("mintCoin", () => {
 
   it("lehnt ab bei zu wenig Rohstoffen", () => {
     const v = makeVillage({ resources: { wood: 0, stone: 0, iron: 0 } });
-    const p = { id: "p1", name: "X", villageIds: ["v1"], points: 0, noblesProduced: 0 };
+    const p = { id: "p1", name: "X", villageIds: ["v1"], points: 0, noblesProduced: 0, research: {} };
     const r = mintCoin(v, p);
     expect("error" in r).toBe(true);
   });

@@ -7,6 +7,7 @@ import {
   sendSupport as simSendSupport,
   recallSupport as simRecallSupport,
   mintCoin as simMintCoin,
+  researchUnit as simResearchUnit,
   type WorldState,
   type BuildingId,
   type UnitId,
@@ -102,6 +103,29 @@ export function actMintCoin(state: WorldState, villageId: string, nowMs: number)
   if (!player) return { ok: false, error: "Spieler unbekannt." };
   const r = simMintCoin(v, player);
   if ("error" in r) return { ok: false, error: r.error };
+  return {
+    ok: true,
+    state: {
+      ...advanced,
+      villages: { ...advanced.villages, [villageId]: r.village },
+      players: { ...advanced.players, [player.id]: r.player },
+    },
+  };
+}
+
+export function actResearch(
+  state: WorldState,
+  villageId: string,
+  unit: UnitId,
+  nowMs: number,
+): { ok: true; state: WorldState } | { ok: false; error: string } {
+  const advanced = advanceTo(state, nowMs);
+  const v = advanced.villages[villageId];
+  if (!v) return { ok: false, error: "Dorf unbekannt." };
+  const player = advanced.players[v.ownerId];
+  if (!player) return { ok: false, error: "Spieler unbekannt." };
+  const r = simResearchUnit(v, player, unit);
+  if (!r.ok) return { ok: false, error: r.error.message };
   return {
     ok: true,
     state: {

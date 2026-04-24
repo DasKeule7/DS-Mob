@@ -9,6 +9,9 @@ import {
 
 const DEFAULT_MAP_SIZE = 200;
 const BARBARIAN_COUNT = 60;
+const AI_PLAYER_COUNT = 3;
+
+const AI_NAMES = ["Grüne Banditen", "Blaue Wölfe", "Rote Raben", "Gelbe Geier", "Schwarze Bären"];
 
 export function randomStartCoord(size: number = DEFAULT_MAP_SIZE): { x: number; y: number } {
   const margin = Math.floor(size * 0.1);
@@ -32,7 +35,6 @@ function emptyUnits() {
   } as const;
 }
 
-// Barbarendorf: einfache Verteidigung + etwas Rohstoffvorrat zum Farmen.
 function makeBarbarian(id: string, coord: { x: number; y: number }, nowMs: number): Village {
   const wood = 300 + Math.floor(Math.random() * 700);
   const stone = 300 + Math.floor(Math.random() * 700);
@@ -56,30 +58,86 @@ function makeBarbarian(id: string, coord: { x: number; y: number }, nowMs: numbe
   };
 }
 
-function generateBarbarians(around: { x: number; y: number }, mapSize: number, nowMs: number): Village[] {
+function makeAiVillage(id: string, ownerId: string, coord: { x: number; y: number }, nowMs: number): Village {
+  return {
+    id,
+    ownerId,
+    coord,
+    name: "Dorf des Feindes",
+    buildings: { ...defaultBuildings(), main: 5, barracks: 2, wood: 5, stone: 5, iron: 5, farm: 4, storage: 3, wall: 2 },
+    units: { ...emptyUnits(), spear: 60 + Math.floor(Math.random() * 60), sword: 30 + Math.floor(Math.random() * 30) },
+    resources: { wood: 1500, stone: 1500, iron: 1000 },
+    lastUpdateMs: nowMs,
+    loyalty: 100,
+    buildQueue: [],
+    recruitQueues: { ...EMPTY_RECRUIT_QUEUES },
+    mintedCoins: 0,
+    supports: [],
+  };
+}
+
+function usedCoord(used: Set<string>, x: number, y: number): boolean {
+  return used.has(`${x},${y}`);
+}
+
+function placeNear(around: { x: number; y: number }, mapSize: number, used: Set<string>, radius: [number, number]): { x: number; y: number } | null {
+  for (let i = 0; i < 80; i++) {
+    const r = radius[0] + Math.random() * (radius[1] - radius[0]);
+    const angle = Math.random() * Math.PI * 2;
+    const x = Math.round(around.x + Math.cos(angle) * r);
+    const y = Math.round(around.y + Math.sin(angle) * r);
+    if (x < 1 || y < 1 || x >= mapSize - 1 || y >= mapSize - 1) continue;
+    if (usedCoord(used, x, y)) continue;
+    used.add(`${x},${y}`);
+    return { x, y };
+  }
+  return null;
+}
+
+function generateBarbarians(around: { x: number; y: number }, mapSize: number, used: Set<string>, nowMs: number): Village[] {
   const villages: Village[] = [];
-  const used = new Set<string>([`${around.x},${around.y}`]);
   let safety = 0;
   while (villages.length < BARBARIAN_COUNT && safety < BARBARIAN_COUNT * 20) {
     safety++;
-    // 2/3 der Dörfer nah am Spieler, 1/3 weiter entfernt.
-    const radius = Math.random() < 0.66 ? 3 + Math.random() * 12 : 10 + Math.random() * 40;
-    const angle = Math.random() * Math.PI * 2;
-    const x = Math.round(around.x + Math.cos(angle) * radius);
-    const y = Math.round(around.y + Math.sin(angle) * radius);
-    if (x < 1 || y < 1 || x >= mapSize - 1 || y >= mapSize - 1) continue;
-    const key = `${x},${y}`;
-    if (used.has(key)) continue;
-    used.add(key);
-    villages.push(makeBarbarian(`v_barb_${villages.length}`, { x, y }, nowMs));
+    const radius: [number, number] = Math.random() < 0.66 ? [3, 15] : [10, 50];
+    const pos = placeNear(around, mapSize, used, radius);
+    if (!pos) continue;
+    villages.push(makeBarbarian(`v_barb_${villages.length}`, pos, nowMs));
   }
   return villages;
+}
+
+interface AiGenOut {
+  villages: Village[];
+  players: Player[];
+}
+
+function generateAiPlayers(around: { x: number; y: number }, mapSize: number, used: Set<string>, nowMs: number): AiGenOut {
+  const villages: Village[] = [];
+  const players: Player[] = [];
+  for (let i = 0; i < AI_PLAYER_COUNT; i++) {
+    const pos = placeNear(around, mapSize, used, [20, 60]);
+    if (!pos) continue;
+    const id = `p_ai_${i}`;
+    const villageId = `v_ai_${i}`;
+    villages.push(makeAiVillage(villageId, id, pos, nowMs));
+    players.push({
+      id,
+      name: AI_NAMES[i] ?? `KI ${i + 1}`,
+      villageIds: [villageId],
+      points: 200 + Math.floor(Math.random() * 400),
+      noblesProduced: 0,
+      research: {},
+    });
+  }
+  return { villages, players };
 }
 
 export function createNewWorld(opts: { playerName: string; villageName: string; nowMs: number }): WorldState {
   const playerId = "p_me";
   const villageId = "v_me_1";
   const playerCoord = randomStartCoord();
+  const used = new Set<string>([`${playerCoord.x},${playerCoord.y}`]);
   const village: Village = {
     id: villageId,
     ownerId: playerId,
@@ -101,10 +159,15 @@ export function createNewWorld(opts: { playerName: string; villageName: string; 
     villageIds: [villageId],
     points: 26,
     noblesProduced: 0,
+    research: {},
   };
-  const barbarians = generateBarbarians(playerCoord, DEFAULT_MAP_SIZE, opts.nowMs);
+  const barbarians = generateBarbarians(playerCoord, DEFAULT_MAP_SIZE, used, opts.nowMs);
+  const ai = generateAiPlayers(playerCoord, DEFAULT_MAP_SIZE, used, opts.nowMs);
   const villages: Record<string, Village> = { [villageId]: village };
   for (const b of barbarians) villages[b.id] = b;
+  for (const a of ai.villages) villages[a.id] = a;
+  const players: Record<string, Player> = { [playerId]: player };
+  for (const p of ai.players) players[p.id] = p;
   return {
     config: {
       speed: 1,
@@ -116,7 +179,7 @@ export function createNewWorld(opts: { playerName: string; villageName: string; 
     },
     nowMs: opts.nowMs,
     villages,
-    players: { [playerId]: player },
+    players,
     flights: [],
     reports: [],
   };

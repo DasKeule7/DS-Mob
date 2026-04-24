@@ -9,6 +9,14 @@ export interface CombatOptions {
   attackHour?: number; // Stunde des Angriffs (0–23). Default 12 (kein Bonus).
   moraleAttacker: number; // 0.3..1.0
   luckPercent: number; // -25..+25
+  // Forschungsstufen 0..3 pro Einheit. Multipliziert Angriff/Verteidigung mit
+  // (1 + 0.1 * level). Fehlend = 0.
+  attackerResearch?: Partial<Record<UnitId, number>>;
+  defenderResearch?: Partial<Record<UnitId, number>>;
+}
+
+function researchMul(level: number | undefined): number {
+  return 1 + 0.1 * Math.max(0, Math.min(3, level ?? 0));
 }
 
 export interface CombatResult {
@@ -28,13 +36,13 @@ export interface CombatResult {
 
 // Summiert die Angriffsstärke nach Kategorie — bestimmt, welche Def gezogen
 // wird. "special" (AG) und "siege" werden als "infantry" gewichtet.
-function attackByCategory(units: UnitCounts): { infantry: number; cavalry: number; archer: number; total: number } {
+function attackByCategory(units: UnitCounts, research?: Partial<Record<UnitId, number>>): { infantry: number; cavalry: number; archer: number; total: number } {
   let inf = 0, cav = 0, arc = 0;
   for (const id of Object.keys(units) as UnitId[]) {
     const n = units[id] ?? 0;
     if (n <= 0) continue;
     const def = UNITS[id];
-    const atk = def.attack * n;
+    const atk = def.attack * n * researchMul(research?.[id]);
     switch (def.category) {
       case "cavalry":  cav += atk; break;
       case "archer":   arc += atk; break;
@@ -45,13 +53,14 @@ function attackByCategory(units: UnitCounts): { infantry: number; cavalry: numbe
 }
 
 // Verteidigungsstärke eines Bestands gegen ein bekanntes Angreiferprofil.
-function defensePower(units: UnitCounts, attackerRatio: { inf: number; cav: number; arc: number }): number {
+function defensePower(units: UnitCounts, attackerRatio: { inf: number; cav: number; arc: number }, research?: Partial<Record<UnitId, number>>): number {
   let total = 0;
   for (const id of Object.keys(units) as UnitId[]) {
     const n = units[id] ?? 0;
     if (n <= 0) continue;
     const d = UNITS[id].defense;
-    total += n * (d.general * attackerRatio.inf + d.cavalry * attackerRatio.cav + d.archer * attackerRatio.arc);
+    const mul = researchMul(research?.[id]);
+    total += n * mul * (d.general * attackerRatio.inf + d.cavalry * attackerRatio.cav + d.archer * attackerRatio.arc);
   }
   return total;
 }
@@ -80,7 +89,7 @@ export function simulateCombat(
   defender: UnitCounts,
   opts: CombatOptions,
 ): CombatResult {
-  const atkByCat = attackByCategory(attacker);
+  const atkByCat = attackByCategory(attacker, opts.attackerResearch);
   const ratio = atkByCat.total > 0
     ? { inf: atkByCat.infantry / atkByCat.total, cav: atkByCat.cavalry / atkByCat.total, arc: atkByCat.archer / atkByCat.total }
     : { inf: 1, cav: 0, arc: 0 };
@@ -95,7 +104,7 @@ export function simulateCombat(
   const moraleMult = Math.max(0.3, Math.min(1, opts.moraleAttacker));
 
   const powerAtkRaw = atkByCat.total;
-  const powerDefRaw = defensePower(defender, ratio);
+  const powerDefRaw = defensePower(defender, ratio, opts.defenderResearch);
   const powerAtk = powerAtkRaw * luckMult * moraleMult;
   const powerDef = powerDefRaw * wallMult * nightMult;
 

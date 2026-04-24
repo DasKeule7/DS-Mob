@@ -83,7 +83,7 @@ function transferVillageOwnership(state: WorldState, villageId: string, oldOwner
     players[oldOwnerId] = { ...p, villageIds: p.villageIds.filter((id) => id !== villageId) };
   }
   if (newOwnerId !== BARBARIAN_OWNER_ID) {
-    const p = players[newOwnerId] ?? { id: newOwnerId, name: newOwnerId, villageIds: [], points: 0, noblesProduced: 0 };
+    const p: Player = players[newOwnerId] ?? { id: newOwnerId, name: newOwnerId, villageIds: [], points: 0, noblesProduced: 0, research: {} };
     if (!p.villageIds.includes(villageId)) {
       players[newOwnerId] = { ...p, villageIds: [...p.villageIds, villageId] };
     }
@@ -113,12 +113,16 @@ function resolveAttack(state: WorldState, flight: Flight, moraleEnabled: boolean
   const rand = mulberryFromString(flight.id);
   const luckPercent = Math.round((rand() * 50 - 25) * 10) / 10;
 
+  const attackerResearch = state.players[flight.ownerId]?.research ?? {};
+  const defenderResearch = state.players[targetSynced.ownerId]?.research ?? {};
   const combat = simulateCombat(flight.units, mergedDefender, {
     wallLevel: targetSynced.buildings.wall,
     nightBonus,
     attackHour,
     moraleAttacker: morale,
     luckPercent,
+    attackerResearch,
+    defenderResearch,
   });
 
   // Verluste proportional auf eigene Truppen + jeden Support verteilen.

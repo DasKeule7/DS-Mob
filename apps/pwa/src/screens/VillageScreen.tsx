@@ -7,6 +7,7 @@ import {
   actEnqueueRecruit,
   actMintCoin,
   actRecallSupport,
+  actResearch,
 } from "../game/actions.js";
 import { ResourceBar } from "../components/ResourceBar.js";
 import { BuildingGrid } from "../components/BuildingGrid.js";
@@ -86,6 +87,11 @@ export function VillageScreen({ villageId }: Props) {
           }}
           onMintCoin={() => {
             const r = actMintCoin(world, villageId, Date.now());
+            if (r.ok) applyWorld(r.state);
+            else showError(r.error);
+          }}
+          onResearch={(unit) => {
+            const r = actResearch(world, villageId, unit, Date.now());
             if (r.ok) applyWorld(r.state);
             else showError(r.error);
           }}

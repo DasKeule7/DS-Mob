@@ -9,8 +9,8 @@ function worldWithPlayer(target = BARBARIAN_OWNER_ID): WorldState {
   const victim = makeVillage({ id: "victim", ownerId: target, coord: { x: 0, y: 1 }, units: { ...makeVillage().units, spear: 5 }, loyalty: 20 });
   const world = makeWorld([me, victim]);
   world.players = {
-    p_me: { id: "p_me", name: "Me", villageIds: ["me"], points: 100, noblesProduced: 0 },
-    ...(target !== BARBARIAN_OWNER_ID ? { p_foe: { id: "p_foe", name: "Foe", villageIds: ["victim"], points: 100, noblesProduced: 0 } } : {}),
+    p_me: { id: "p_me", name: "Me", villageIds: ["me"], points: 100, noblesProduced: 0, research: {} },
+    ...(target !== BARBARIAN_OWNER_ID ? { p_foe: { id: "p_foe", name: "Foe", villageIds: ["victim"], points: 100, noblesProduced: 0, research: {} } } : {}),
   };
   return world;
 }

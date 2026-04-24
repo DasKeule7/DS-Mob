@@ -1,19 +1,26 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { BARBARIAN_OWNER_ID, type Village, type WorldState } from "@ds-mob/core";
 
+export interface MapFilters {
+  showOwn: boolean;
+  showBarb: boolean;
+  showEnemy: boolean;
+}
+
 interface Props {
   world: WorldState;
   myVillageId: string;
+  myVillageIds: string[];
+  myOwnerId: string;
+  filters: MapFilters;
+  center: { x: number; y: number };
+  onCenterChange: (c: { x: number; y: number }) => void;
   onSelect: (villageId: string) => void;
 }
 
-// Kartenanzeige: schlanke SVG-Karte, pan-fähig, Dörfer als Icons.
-// Chunk-Loading sparen wir uns für MVP, 60 Dörfer in SVG sind mobile-tauglich.
-export function MapView({ world, myVillageId, onSelect }: Props) {
-  const me = world.villages[myVillageId];
+export function MapView({ world, myVillageId, myVillageIds, myOwnerId, filters, center, onCenterChange, onSelect }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState(10); // Pixel pro Feld
-  const [center, setCenter] = useState<{ x: number; y: number }>(me ? me.coord : { x: 100, y: 100 });
+  const [scale, setScale] = useState(10);
   const [containerSize, setContainerSize] = useState({ w: 320, h: 400 });
   const dragState = useRef<{ startX: number; startY: number; centerX: number; centerY: number } | null>(null);
 
@@ -28,6 +35,7 @@ export function MapView({ world, myVillageId, onSelect }: Props) {
   }, []);
 
   const villagesArr = useMemo(() => Object.values(world.villages), [world.villages]);
+  const myIds = useMemo(() => new Set(myVillageIds), [myVillageIds]);
 
   function onPointerDown(e: React.PointerEvent) {
     (e.target as Element).setPointerCapture(e.pointerId);
@@ -38,13 +46,12 @@ export function MapView({ world, myVillageId, onSelect }: Props) {
     if (!d) return;
     const dx = (e.clientX - d.startX) / scale;
     const dy = (e.clientY - d.startY) / scale;
-    setCenter({ x: d.centerX - dx, y: d.centerY - dy });
+    onCenterChange({ x: d.centerX - dx, y: d.centerY - dy });
   }
   function onPointerUp() {
     dragState.current = null;
   }
 
-  // Sichtbare Felder umrechnen
   const halfW = containerSize.w / scale / 2;
   const halfH = containerSize.h / scale / 2;
   const minX = center.x - halfW;
@@ -57,11 +64,19 @@ export function MapView({ world, myVillageId, onSelect }: Props) {
     };
   }
 
+  function visibleVillage(v: Village): boolean {
+    const isMine = myIds.has(v.id) || v.ownerId === myOwnerId;
+    const isBarb = v.ownerId === BARBARIAN_OWNER_ID;
+    if (isMine) return filters.showOwn;
+    if (isBarb) return filters.showBarb;
+    return filters.showEnemy;
+  }
+
   return (
     <div className="mapWrap">
       <div className="mapControls">
         <button type="button" onClick={() => setScale((s) => Math.max(3, s - 3))} aria-label="Rauszoomen">−</button>
-        <button type="button" onClick={() => setCenter(me ? me.coord : { x: 100, y: 100 })} aria-label="Zentrieren">⌂</button>
+        <button type="button" onClick={() => { const me = world.villages[myVillageId]; if (me) onCenterChange(me.coord); }} aria-label="Zentrieren">⌂</button>
         <button type="button" onClick={() => setScale((s) => Math.min(32, s + 3))} aria-label="Reinzoomen">+</button>
       </div>
       <div
@@ -80,16 +95,18 @@ export function MapView({ world, myVillageId, onSelect }: Props) {
             </pattern>
           </defs>
           <rect width="100%" height="100%" fill="url(#grid)" />
-          {villagesArr.map((v) => {
+          {villagesArr.filter(visibleVillage).map((v) => {
             const { cx, cy } = pos(v);
             if (cx < -20 || cx > containerSize.w + 20 || cy < -20 || cy > containerSize.h + 20) return null;
-            const isMe = v.id === myVillageId;
+            const isActive = v.id === myVillageId;
+            const isMine = myIds.has(v.id) || v.ownerId === myOwnerId;
             const isBarb = v.ownerId === BARBARIAN_OWNER_ID;
-            const r = isMe ? 8 : 5;
+            const r = isActive ? 8 : isMine ? 6 : 5;
+            const fill = isMine ? "#c9a96a" : isBarb ? "#7a5a3c" : "#b0463a";
             return (
               <g key={v.id} transform={`translate(${cx},${cy})`} onClick={(e) => { e.stopPropagation(); onSelect(v.id); }} style={{ cursor: "pointer" }}>
-                <circle r={r + 2} fill={isMe ? "rgba(201,169,106,0.3)" : "transparent"} />
-                <circle r={r} fill={isMe ? "#c9a96a" : isBarb ? "#7a5a3c" : "#b0463a"} stroke="#1b120e" strokeWidth={1} />
+                {isMine && <circle r={r + 3} fill="none" stroke="#c9a96a" strokeWidth={1.5} opacity={isActive ? 0.9 : 0.5} />}
+                <circle r={r} fill={fill} stroke="#1b120e" strokeWidth={1} />
                 {scale >= 8 && (
                   <text y={r + 9} textAnchor="middle" fontSize="9" fill="#c9a96a">
                     {v.coord.x}|{v.coord.y}

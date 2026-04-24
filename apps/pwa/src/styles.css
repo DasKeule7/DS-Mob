@@ -454,3 +454,60 @@ input {
 /* Academy panel */
 .academyPanel { margin-top: 1rem; border-top: 1px solid var(--border); padding-top: 0.5rem; }
 .academyPanel h3 { margin: 0 0 0.4rem; font-size: 0.95rem; }
+
+/* Smithy / research panel */
+.smithyPanel { margin-top: 1rem; border-top: 1px solid var(--border); padding-top: 0.5rem; }
+.smithyPanel h3 { margin: 0 0 0.4rem; font-size: 0.95rem; }
+.researchRow {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.5rem 0.75rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--border);
+  align-items: center;
+}
+.researchRowInfo { display: flex; flex-direction: column; }
+.researchRowCost {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 0.75rem;
+  color: var(--accent-dim);
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Map filters + jump */
+.mapFilters {
+  display: flex;
+  gap: 0.4rem;
+  padding: 0.5rem;
+  background: var(--bg-elev);
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.mapFilters::-webkit-scrollbar { display: none; }
+.filterChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.7rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--accent-dim);
+  border-radius: 999px;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+.filterChip.active { color: var(--fg); border-color: var(--accent-dim); }
+.jumpForm {
+  display: flex;
+  gap: 0.25rem;
+  margin-left: auto;
+}
+.jumpForm input {
+  width: 56px;
+  padding: 0.3rem 0.4rem;
+  font-size: 0.8rem;
+  text-align: center;
+}
